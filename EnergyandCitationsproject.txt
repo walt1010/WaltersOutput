@@ -1,0 +1,578 @@
+Analysis of Country Energy and Emissions data, Citations output per country
+
+
+
+def energy1():
+    energy = pd.read_excel(r'Energy Indicators.xls', skiprows=17,skipfooter=38)
+    energy.drop(energy.columns[[0, 1]], axis=1, inplace=True)
+
+
+    energy.columns=['Country', 'Energy Supply', 'Energy Supply per Capita', '% Renewable']
+
+    energy = energy.replace('...', np.nan)
+
+    energy['Country']=energy['Country'].str.replace(r"( \(.*\))","")
+    energy['Country']=energy['Country'].str.replace(r"([0-9])","")
+    
+    energy["Country"].replace({"Republic of Korea": "South Korea",
+      "United States of America": "United States",
+      "United Kingdom of Great Britain and Northern Ireland": "United Kingdom",
+      "China, Hong Kong Special Administrative Region": "Hong Kong"}, inplace=True)
+    
+    energy['Energy Supply'] = energy['Energy Supply'] * 1000000
+    
+    return energy
+
+def GDP1():
+    
+    GDP = pd.read_csv('world_bank.csv', skiprows=4)
+    
+    
+    GDP.rename(columns = {'Country Name':'Country'}, inplace = True)
+    GDP["Country"].replace({"Korea, Rep.": "South Korea", 
+     "Iran, Islamic Rep.": "Iran", "Hong Kong SAR, China": "Hong Kong"}, inplace=True)
+    
+    required_columns = ['Country', '2006', '2007', '2008','2009','2010', '2011','2012','2013','2014','2015']
+
+    column_list = GDP.columns
+    s_column_list = set(column_list)
+
+    s_required_columns = set(required_columns)
+    s_column_list = s_column_list - s_required_columns
+    s_column_list = list(s_column_list)
+
+
+    GDP.drop(s_column_list,axis=1,inplace=True)
+    
+    return GDP
+    
+#-----------------------------------------------------------------------
+def ScimEn1():
+    
+    ScimEn = pd.read_excel('scimagojr-3.xlsx')
+    
+    ScimEn['Rank'] = ScimEn['Rank'].astype(int)
+
+    return ScimEn
+
+#-----------------------------------------------------------------------
+
+def answer_one():
+    
+    energy = energy1()
+    GDP = GDP1()
+    ScimEn = ScimEn1()
+      
+    
+    df_merged1=pd.merge(GDP, ScimEn, on='Country')
+    
+    df_merged1['Rank'] = df_merged1['Rank'].astype(int)
+    
+    df_merged=pd.merge(df_merged1, energy, on='Country')
+    
+    df_merged.set_index("Country", inplace = True)
+    
+    df_merged['Rank'] = df_merged['Rank'].astype(int)
+   
+
+
+    required_columns = ['Rank', 'Documents', 'Citable documents', 'Citations', 'Self-citations', 
+     'Citations per document', 'H index', 'Energy Supply', 'Energy Supply per Capita', '% Renewable', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015']
+ 
+
+    column_list = df_merged.columns
+    s_column_list = set(column_list)
+
+    s_required_columns = set(required_columns)
+    s_column_list = s_column_list - s_required_columns
+    s_column_list = list(s_column_list)
+
+#----------
+
+    df_merged.drop(s_column_list,axis=1,inplace=True)
+    
+
+    df_merged = df_merged[(df_merged['Rank'].astype(int) < 16)]
+    
+    return df_merged
+    
+def answer_two():
+    energy = energy1()
+    GDP = GDP1()
+    ScimEn = ScimEn1()
+
+    
+    df_merged1=pd.merge(GDP, ScimEn,on='Country', how = 'outer')
+          
+    df_merged=pd.merge(df_merged1, energy,on='Country', how = 'outer')
+    
+    df_merged2=pd.merge(GDP, ScimEn,on='Country', how ='inner')
+    
+    df_merged2=pd.merge(df_merged2, energy,on='Country', how = 'inner')
+    
+
+    outer_rows = len(df_merged.index)
+    inner_rows = len(df_merged2.index)
+                   
+    rows_lost = outer_rows - inner_rows
+
+  
+
+    return rows_lost
+ 
+def answer_three():
+    years_list = ['2006', '2007', '2008','2009','2010', '2011','2012','2013','2014','2015']
+    
+    energy = energy1()
+    GDP = GDP1()
+    ScimEn = ScimEn1()
+
+    df_merged1=pd.merge(GDP, ScimEn, on='Country')
+    
+    df_merged1['Rank'] = df_merged1['Rank'].astype(int)
+    
+    df_merged=pd.merge(df_merged1, energy, on='Country')
+    
+    df_merged.set_index("Country", inplace = True)
+        
+#df_merged['Rank'] = df_merged['Rank'].astype(int)
+    df_merged = df_merged[(df_merged['Rank'].astype(int) < 16)]
+   
+    required_columns = ['Rank', 'Documents', 'Citable documents', 'Citations', 'Self-citations', 
+     'Citations per document', 'H index', 'Energy Supply', 'Energy Supply per Capita', '% Renewable', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015']
+ 
+    column_list = df_merged.columns
+    s_column_list = set(column_list)
+
+    s_required_columns = set(required_columns)
+    s_column_list = s_column_list - s_required_columns
+    s_column_list = list(s_column_list)
+
+#----------
+
+# df_merged.drop(s_column_list,axis=1,inplace=True)
+    
+    avgGDP = df_merged[years_list].mean(axis=1)
+
+    avgGDP = avgGDP.sort_values(ascending=False)
+    
+    return avgGDP
+    
+ def answer_four():
+    years_list = ['2006', '2007', '2008','2009','2010', '2011','2012','2013','2014','2015']
+    
+    energy = energy1()
+    GDP = GDP1()
+    ScimEn = ScimEn1()
+
+    df_merged1=pd.merge(GDP, ScimEn, on='Country')
+    
+    df_merged1['Rank'] = df_merged1['Rank'].astype(int)
+    
+    df_merged=pd.merge(df_merged1, energy, on='Country')
+    
+    df_merged.set_index("Country", inplace = True)
+        
+#df_merged['Rank'] = df_merged['Rank'].astype(int)
+    df_merged = df_merged[(df_merged['Rank'].astype(int) < 16)]
+   
+    required_columns = ['Rank', 'Documents', 'Citable documents', 'Citations', 'Self-citations', 
+     'Citations per document', 'H index', 'Energy Supply', 'Energy Supply per Capita', '% Renewable', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015']
+ 
+    column_list = df_merged.columns
+    s_column_list = set(column_list)
+
+    s_required_columns = set(required_columns)
+    s_column_list = s_column_list - s_required_columns
+    s_column_list = list(s_column_list)
+    
+    avgGDP = df_merged[years_list].mean(axis=1)
+
+    avgGDP = avgGDP.sort_values(ascending=False)
+
+    target_row = df_merged.loc[avgGDP.index[5]]
+ 
+    answer = target_row['2015'] - target_row['2006']
+
+    return answer
+    
+ def answer_five():
+    years_list = ['2006', '2007', '2008','2009','2010', '2011','2012','2013','2014','2015']
+    
+    energy = energy1()
+    GDP = GDP1()
+    ScimEn = ScimEn1()
+
+    df_merged1=pd.merge(GDP, ScimEn, on='Country')
+    
+    df_merged1['Rank'] = df_merged1['Rank'].astype(int)
+    
+    
+    df_merged=pd.merge(df_merged1, energy, on='Country')
+    
+    df_merged.set_index("Country", inplace = True)
+        
+#df_merged['Rank'] = df_merged['Rank'].astype(int)
+    df_merged = df_merged[(df_merged['Rank'].astype(int) < 16)]
+   
+    required_columns = ['Rank', 'Documents', 'Citable documents', 'Citations', 'Self-citations', 
+     'Citations per document', 'H index', 'Energy Supply', 'Energy Supply per Capita', '% Renewable', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015']
+ 
+    column_list = df_merged.columns
+    s_column_list = set(column_list)
+
+    s_required_columns = set(required_columns)
+    s_column_list = s_column_list - s_required_columns
+    s_column_list = list(s_column_list)
+    answer = df_merged["Energy Supply per Capita"].mean()
+    return answer
+
+
+def answer_six():
+
+    years_list = ['2006', '2007', '2008','2009','2010', '2011','2012','2013','2014','2015']
+    
+    energy = energy1()
+    GDP = GDP1()
+    ScimEn = ScimEn1()
+
+    df_merged1=pd.merge(GDP, ScimEn, on='Country')
+    
+    df_merged1['Rank'] = df_merged1['Rank'].astype(int)
+    
+    df_merged=pd.merge(df_merged1, energy, on='Country')
+    
+    df_merged.set_index("Country", inplace = True)
+        
+#df_merged['Rank'] = df_merged['Rank'].astype(int)
+    df_merged = df_merged[(df_merged['Rank'].astype(int) < 16)]
+   
+    required_columns = ['Rank', 'Documents', 'Citable documents', 'Citations', 'Self-citations', 
+     'Citations per document', 'H index', 'Energy Supply', 'Energy Supply per Capita', '% Renewable', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015']
+ 
+    column_list = df_merged.columns
+    s_column_list = set(column_list)
+
+    s_required_columns = set(required_columns)
+    s_column_list = s_column_list - s_required_columns
+    s_column_list = list(s_column_list)
+    
+    
+    df_merged['% Renewable'] = df_merged['% Renewable'].astype(float)
+    max_value = df_merged['% Renewable'].max()
+    idxmax1 = df_merged['% Renewable'].idxmax()
+ 
+    answer_tuple = (idxmax1,max_value )                                    
+      
+    return answer_tuple
+    
+ def answer_seven():
+       
+    years_list = ['2006', '2007', '2008','2009','2010', '2011','2012','2013','2014','2015']
+    
+    energy = energy1()
+    GDP = GDP1()
+    ScimEn = ScimEn1()
+
+    df_merged1=pd.merge(GDP, ScimEn, on='Country')
+    
+    df_merged1['Rank'] = df_merged1['Rank'].astype(int)
+    
+    df_merged=pd.merge(df_merged1, energy, on='Country')
+    
+    df_merged.set_index("Country", inplace = True)
+        
+#df_merged['Rank'] = df_merged['Rank'].astype(int)
+    df_merged = df_merged[(df_merged['Rank'].astype(int) < 16)]
+   
+    required_columns = ['Rank', 'Documents', 'Citable documents', 'Citations', 'Self-citations', 
+     'Citations per document', 'H index', 'Energy Supply', 'Energy Supply per Capita', '% Renewable', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015']
+ 
+    column_list = df_merged.columns
+    s_column_list = set(column_list)
+
+    s_required_columns = set(required_columns)
+    s_column_list = s_column_list - s_required_columns
+    s_column_list = list(s_column_list)
+    
+    df_merged['Self-citations'] = df_merged['Self-citations'].astype(int)
+    df_merged['Citations'] = df_merged['Citations'].astype(int)
+    
+    df_merged['Citations_ratio'] = (df_merged['Self-citations']/df_merged['Citations'])
+
+    idxmax1 = df_merged['Citations_ratio'].idxmax()
+    max_value = df_merged['Citations_ratio'].max()
+  
+    answer_tuple = (idxmax1, max_value)
+
+    return answer_tuple
+    
+def answer_eight():
+    years_list = ['2006', '2007', '2008','2009','2010', '2011','2012','2013','2014','2015']
+    
+    energy = energy1()
+    GDP = GDP1()
+    ScimEn = ScimEn1()
+
+    df_merged1=pd.merge(GDP, ScimEn, on='Country')
+    
+    df_merged1['Rank'] = df_merged1['Rank'].astype(int)
+    
+    df_merged=pd.merge(df_merged1, energy, on='Country')
+    
+    df_merged.set_index("Country", inplace = True)
+        
+#df_merged['Rank'] = df_merged['Rank'].astype(int)
+    df_merged = df_merged[(df_merged['Rank'].astype(int) < 16)]
+   
+    required_columns = ['Rank', 'Documents', 'Citable documents', 'Citations', 'Self-citations', 
+     'Citations per document', 'H index', 'Energy Supply', 'Energy Supply per Capita', '% Renewable', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015']
+ 
+    column_list = df_merged.columns
+    s_column_list = set(column_list)
+
+    s_required_columns = set(required_columns)
+    s_column_list = s_column_list - s_required_columns
+    s_column_list = list(s_column_list)
+    
+    df_merged['Energy Supply'] = df_merged['Energy Supply'].astype(float)
+    
+    df_merged['Energy Supply per Capita'] = df_merged['Energy Supply per Capita']
+    
+    df_merged['Population'] = (df_merged['Energy Supply'] / df_merged['Energy Supply per Capita'])
+    
+    series_pop = df_merged['Population'].astype(int)
+    
+    series_pop = series_pop.sort_values(ascending=False)
+    
+    answer = series_pop.index.values[2]
+    
+    return answer
+    
+ def answer_nine():
+    years_list = ['2006', '2007', '2008','2009','2010', '2011','2012','2013','2014','2015']
+    
+    energy = energy1()
+    GDP = GDP1()
+    ScimEn = ScimEn1()
+
+    df_merged1=pd.merge(GDP, ScimEn, on='Country')
+    
+    df_merged1['Rank'] = df_merged1['Rank'].astype(int)
+    
+    df_merged=pd.merge(df_merged1, energy, on='Country')
+    
+    df_merged.set_index("Country", inplace = True)
+        
+    df_merged = df_merged[(df_merged['Rank'].astype(int) < 16)]
+   
+    required_columns = ['Rank', 'Documents', 'Citable documents', 'Citations', 'Self-citations', 
+     'Citations per document', 'H index', 'Energy Supply', 'Energy Supply per Capita', '% Renewable', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015']
+ 
+    column_list = df_merged.columns
+    s_column_list = set(column_list)
+
+    s_required_columns = set(required_columns)
+    s_column_list = s_column_list - s_required_columns
+    s_column_list = list(s_column_list)
+    
+    df_merged['Energy Supply'] = df_merged['Energy Supply'].astype(float)
+    
+    df_merged['Energy Supply per Capita'] = df_merged['Energy Supply per Capita']
+    
+    df_merged['Population'] = (df_merged['Energy Supply'] / df_merged['Energy Supply per Capita'])
+    
+    series_pop = df_merged['Population'].astype(int)
+    
+    df_merged["Citable documents"] = pd.to_numeric(df_merged["Citable documents"],errors='coerce')
+
+    df_merged["Citable documents"].fillna(0, inplace=True)
+    df_merged['Population'].fillna(0, inplace=True)
+    df_merged['Citable docs per person'] = (df_merged['Citable documents'] / df_merged['Population'])
+    df_merged['Citable docs per person']=np.float64(df_merged['Citable docs per person'])
+    
+ 
+    target_series = df_merged['Citable docs per person']
+    answer_corr = df_merged['Citable docs per person'].corr(df_merged['Energy Supply per Capita'])
+
+    return answer_corr
+    
+def answer_ten():
+    years_list = ['2006', '2007', '2008','2009','2010', '2011','2012','2013','2014','2015']
+    
+    energy = energy1()
+    GDP = GDP1()
+    ScimEn = ScimEn1()
+
+    df_merged1=pd.merge(GDP, ScimEn, on='Country')
+    
+    df_merged1['Rank'] = df_merged1['Rank'].astype(int)
+    
+    df_merged=pd.merge(df_merged1, energy, on='Country')
+    
+    df_merged.set_index("Country", inplace = True)
+        
+#df_merged['Rank'] = df_merged['Rank'].astype(int)
+    df_merged = df_merged[(df_merged['Rank'].astype(int) < 16)]
+   
+    required_columns = ['Rank', 'Documents', 'Citable documents', 'Citations', 'Self-citations', 
+     'Citations per document', 'H index', 'Energy Supply', 'Energy Supply per Capita', '% Renewable', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015']
+ 
+    column_list = df_merged.columns
+    s_column_list = set(column_list)
+
+    s_required_columns = set(required_columns)
+    s_column_list = s_column_list - s_required_columns
+    s_column_list = list(s_column_list)
+    
+    df_merged['% Renewable'] = pd.to_numeric(df_merged['% Renewable'],errors='coerce')
+    df_merged['% Renewable'].fillna(0, inplace=True)
+
+
+    df_merged['renew']=np.where(df_merged['% Renewable']>=df_merged['% Renewable'].median(),1,0)
+
+    HighRenew=df_merged.sort_values(by='Rank')['% Renewable']
+
+    return HighRenew
+    
+ def answer_eleven():
+    
+    ContinentDict  = {'China':'Asia', 
+                  'United States':'North America', 
+                  'Japan':'Asia', 
+                  'United Kingdom':'Europe', 
+                  'Russian Federation':'Europe', 
+                  'Canada':'North America', 
+                  'Germany':'Europe', 
+                  'India':'Asia',
+                  'France':'Europe', 
+                  'South Korea':'Asia', 
+                  'Italy':'Europe', 
+                  'Spain':'Europe', 
+                  'Iran':'Asia',
+                  'Australia':'Australia', 
+                  'Brazil':'South America'}
+    
+      
+    years_list = ['2006', '2007', '2008','2009','2010', '2011','2012','2013','2014','2015']
+    
+    energy = energy1()
+    GDP = GDP1()
+    ScimEn = ScimEn1()
+
+    df_merged1=pd.merge(GDP, ScimEn, on='Country')
+    
+    df_merged1['Rank'] = df_merged1['Rank'].astype(int)
+    
+    df_merged=pd.merge(df_merged1, energy, on='Country')
+    
+    df_merged.set_index("Country", inplace = True)
+        
+    df_merged = df_merged[(df_merged['Rank'].astype(int) < 16)]
+   
+    required_columns = ['Rank', 'Documents', 'Citable documents', 'Citations', 'Self-citations', 
+     'Citations per document', 'H index', 'Energy Supply', 'Energy Supply per Capita', '% Renewable', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015']
+ 
+    column_list = df_merged.columns
+    s_column_list = set(column_list)
+
+    s_required_columns = set(required_columns)
+    s_column_list = s_column_list - s_required_columns
+    s_column_list = list(s_column_list)
+    
+    df_merged['Population'] = (df_merged['Energy Supply'] / df_merged['Energy Supply per Capita'])
+    df_merged = df_merged.groupby(ContinentDict)['Population'].agg(['size','sum','mean','std'])
+    return df_merged
+
+
+def answer_twelve():
+    years_list = ['2006', '2007', '2008','2009','2010', '2011','2012','2013','2014','2015']
+    
+    ContinentDict  = {'China':'Asia', 
+                  'United States':'North America', 
+                  'Japan':'Asia', 
+                  'United Kingdom':'Europe', 
+                  'Russian Federation':'Europe', 
+                  'Canada':'North America', 
+                  'Germany':'Europe', 
+                  'India':'Asia',
+                  'France':'Europe', 
+                  'South Korea':'Asia', 
+                  'Italy':'Europe', 
+                  'Spain':'Europe', 
+                  'Iran':'Asia',
+                  'Australia':'Australia', 
+                  'Brazil':'South America'}
+    
+    energy = energy1()
+    GDP = GDP1()
+    ScimEn = ScimEn1()
+
+    df_merged1=pd.merge(GDP, ScimEn, on='Country')
+    
+    df_merged1['Rank'] = df_merged1['Rank'].astype(int)
+    
+    df_merged=pd.merge(df_merged1, energy, on='Country')
+    
+    df_merged.set_index("Country", inplace = True)
+        
+    df_merged = df_merged[(df_merged['Rank'].astype(int) < 16)]
+   
+    required_columns = ['Rank', 'Documents', 'Citable documents', 'Citations', 'Self-citations', 
+     'Citations per document', 'H index', 'Energy Supply', 'Energy Supply per Capita', '% Renewable', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015']
+ 
+    column_list = df_merged.columns
+    s_column_list = set(column_list)
+
+    s_required_columns = set(required_columns)
+    s_column_list = s_column_list - s_required_columns
+    s_column_list = list(s_column_list)
+    
+    df_merged = df_merged.reset_index()
+    df_merged['Continent'] = df_merged['Country'].map(ContinentDict)
+    df_merged['% Renewable'] = pd.cut(df_merged['% Renewable'], 5)
+    result = df_merged.groupby(['Continent', '% Renewable'])['Country'].count()
+    result = result.reset_index()
+    
+    result = result.set_index(['Continent', '% Renewable'])
+    return result['Country']
+
+def sep(s, thou=",", dec="."):
+    number_list = s.split(".")
+    integr = number_list[0]
+    decimal = number_list[-1] 
+    integr = re.sub(r"\B(?=(?:\d{3})+$)", thou, integr)
+    return integr + dec + decimal
+    
+def answer_thirteen():
+    import re
+    years_list = ['2006', '2007', '2008','2009','2010', '2011','2012','2013','2014','2015']
+    
+    energy = energy1()
+    GDP = GDP1()
+    ScimEn = ScimEn1()
+
+    df_merged1=pd.merge(GDP, ScimEn, on='Country')
+    
+    df_merged1['Rank'] = df_merged1['Rank'].astype(int)
+    
+    df_merged=pd.merge(df_merged1, energy, on='Country')
+    
+    df_merged.set_index("Country", inplace = True)
+        
+    df_merged = df_merged[(df_merged['Rank'].astype(int) < 16)]
+   
+    required_columns = ['Rank', 'Documents', 'Citable documents', 'Citations', 'Self-citations', 
+     'Citations per document', 'H index', 'Energy Supply', 'Energy Supply per Capita', '% Renewable', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015']
+ 
+    column_list = df_merged.columns
+    s_column_list = set(column_list)
+
+    s_required_columns = set(required_columns)
+    s_column_list = s_column_list - s_required_columns
+    s_column_list = list(s_column_list)
+    
+    df_merged['PopEst'] = df_merged['Energy Supply']/df_merged['Energy Supply per Capita']
+    df_merged['PopEst'] = df_merged['PopEst'].apply('{:,}'.format)
+    return df_merged['PopEst']
+
